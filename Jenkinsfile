@@ -17,12 +17,6 @@ pipeline {
             }
         }
 
-        stage('Archive Artifact') {
-            steps {
-                // Archive the correct artifact with dynamic name
-                archiveArtifacts artifacts: "target/hello-world-${BUILD_NUMBER}.jar", fingerprint: true
-            }
-        }
 
         stage('Login to Octopus CLI') {
             steps {
