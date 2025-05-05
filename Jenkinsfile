@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         OCTOPUS_API_KEY = credentials('octopus-api-key')       // ID from Jenkins Credentials
-        OCTOPUS_HOST = 'https://devtools.octopus.app/'         // Your Octopus URL
+        OCTOPUS_URL = 'https://devtools.octopus.app/'         // Your Octopus URL
         SPACE = 'Spaces-122'                                   // Your Octopus Space ID
         ARTIFACT_NAME = "hello-world_${BUILD_NUMBER}.jar"      // Artifact name with build number
         PACKAGE_PATH = "target/${ARTIFACT_NAME}"               // Package path with dynamic name
@@ -12,19 +12,29 @@ pipeline {
     stages {
         stage('Build with Maven') {
             steps {
-                sh "mvn clean package -Djar.finalName=${ARTIFACT_NAME}"  // Build with dynamic artifact name
+                // Build the project and set the finalName dynamically
+                sh "mvn clean package -Djar.finalName=hello-world-${BUILD_NUMBER}"
             }
         }
 
-        
+        stage('Login to Octopus CLI') {
+            steps {
+                sh '''
+                    octopus login \
+                      --server "${OCTOPUS_URL}" \
+                      --api-key "${OCTOPUS_API_KEY}"
+                '''
+            }
+        }
+
         stage('Upload to Octopus Deploy') {
             steps {
-                // Upload the correct artifact
+                // Upload the artifact to Octopus Deploy
                 sh '''
                   octopus package upload \
-                    --package "target/hello-world_${BUILD_NUMBER}.jar" \
+                    --package "target/hello-world-${BUILD_NUMBER}.jar" \
                     --space "${SPACE}" \
-                    --server "${OCTOPUS_HOST}" \
+                    --server "${OCTOPUS_URL}" \
                     --api-key "${OCTOPUS_API_KEY}" \
                     --overwrite-mode overwrite
                 '''
