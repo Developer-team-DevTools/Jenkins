@@ -32,7 +32,7 @@ pipeline {
                 // Upload the artifact to Octopus Deploy
                 sh '''
                   octopus package upload \
-                    --package "target/helloworld-${BUILD_NUMBER}.jar" \
+                    --package "target/helloworld_${BUILD_NUMBER}.jar" \
                     --space "${SPACE}" \
                     --overwrite-mode overwrite
                 '''
