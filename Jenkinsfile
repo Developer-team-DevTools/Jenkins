@@ -17,6 +17,13 @@ pipeline {
             }
         }
 
+        stage('Archive Artifact') {
+            steps {
+                // Archive the correct artifact with dynamic name
+                archiveArtifacts artifacts: "target/hello-world-${BUILD_NUMBER}.jar", fingerprint: true
+            }
+        }
+
         stage('Login to Octopus CLI') {
             steps {
                 sh '''
@@ -34,7 +41,6 @@ pipeline {
                   octopus package upload \
                     --package "target/hello-world-${BUILD_NUMBER}.jar" \
                     --space "${SPACE}" \
-                    --api-key "${OCTOPUS_API_KEY}" \
                     --overwrite-mode overwrite
                 '''
             }
