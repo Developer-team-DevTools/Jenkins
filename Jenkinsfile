@@ -5,17 +5,24 @@ pipeline {
         OCTOPUS_API_KEY = credentials('octopus-api-key')       // ID from Jenkins Credentials
         OCTOPUS_URL = 'https://devtools.octopus.app/'           // Your Octopus URL
         SPACE = 'Spaces-122'                                   // Your Octopus Space ID
-        ARTIFACT_NAME = "helloworld-${BUILD_NUMBER}.jar"        // Artifact name with build number
         PACKAGE_PATH = "target/${ARTIFACT_NAME}"                // Package path with dynamic name
+        PACKAGE_VERSION = "1.0.${BUILD_NUMBER}"                 // Dynamic version: 1.0.1, 1.0.2, etc.
     }
 
     stages {
-        stage('Build with Maven') {
+        stage('Build Project') {
             steps {
                 // Build the project with dynamic version and final name
-                sh "mvn clean package -DBUILD_NUMBER=${BUILD_NUMBER}"
+                sh "mvn clean package -Djar.finalName=hello-world.${PACKAGE_VERSION}"
                 // List the files in the target directory to verify the .jar file exists
                 sh 'ls target/'
+            }
+        }
+
+        stage('Archive JAR') {
+            steps {
+                // Archive the correctly named JAR for record-keeping in Jenkins
+                archiveArtifacts artifacts: "target/hello-world.${PACKAGE_VERSION}.jar", fingerprint: true
             }
         }
 
@@ -34,7 +41,7 @@ pipeline {
                 // Upload the artifact to Octopus Deploy
                 sh '''
                   octopus package upload \
-                    --package "target/helloworld-${BUILD_NUMBER}.jar" \
+                    --package "target/hello-world.${PACKAGE_VERSION}.jar" \
                     --space "${SPACE}" \
                     --overwrite-mode overwrite
                 '''
