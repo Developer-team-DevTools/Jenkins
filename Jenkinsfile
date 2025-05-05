@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         OCTOPUS_API_KEY = credentials('octopus-api-key')       // ID from Jenkins Credentials
-        OCTOPUS_URL = 'https://devtools.octopus.app/'         // Your Octopus URL
+        OCTOPUS_URL = 'https://devtools.octopus.app/'           // Your Octopus URL
         SPACE = 'Spaces-122'                                   // Your Octopus Space ID
         ARTIFACT_NAME = "hello-world_${BUILD_NUMBER}.jar"      // Artifact name with build number
         PACKAGE_PATH = "target/${ARTIFACT_NAME}"               // Package path with dynamic name
@@ -34,7 +34,6 @@ pipeline {
                   octopus package upload \
                     --package "target/hello-world-${BUILD_NUMBER}.jar" \
                     --space "${SPACE}" \
-                    --server "${OCTOPUS_URL}" \
                     --api-key "${OCTOPUS_API_KEY}" \
                     --overwrite-mode overwrite
                 '''
