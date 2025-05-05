@@ -1,52 +1,37 @@
 pipeline {
     agent any
 
-    environment { 
-        PROJECT_NAME = "allen"                         // Project name (from Bitbucket)
-        MAVEN_HOME = tool 'Maven'                      // Maven tool configured in Jenkins
-        ARTIFACT_NAME = "${PROJECT_NAME}_${BUILD_NUMBER}.jar"  // Artifact name
-        JFROG_REPO = "gumon"                           // JFrog repository name
+    environment {
+        OCTOPUS_API_KEY = credentials('octopus-api-key')       // ID from Jenkins Credentials
+        OCTOPUS_HOST = 'https://devtools.octopus.app/'         // Your Octopus URL
+        SPACE = 'Spaces-122'                                   // Your Octopus Space ID
+        ARTIFACT_NAME = "hello-world_${BUILD_NUMBER}.jar"      // Artifact name with build number
+        PACKAGE_PATH = "target/${ARTIFACT_NAME}"               // Package path with dynamic name
     }
 
     stages {
-        stage('Checkout') { 
-            steps {
-                git branch: 'main',
-                    credentialsId: 'github-creds',         // Bitbucket credentials ID
-                    url: 'https://github.com/Venu-DevTools/Git-Jen-Jfrog-OD.git'
-            }
-        }
-
         stage('Build with Maven') {
             steps {
-                sh "${MAVEN_HOME}/bin/mvn clean install -Djar.finalName=${PROJECT_NAME}_${BUILD_NUMBER}"
+                sh "mvn clean package -Djar.finalName=${ARTIFACT_NAME}"  // Use dynamic name for the artifact
             }
         }
 
-        stage('Archive JAR') {
+        stage('Archive Artifact') {
             steps {
-                archiveArtifacts artifacts: "target/${ARTIFACT_NAME}", fingerprint: true
+                archiveArtifacts artifacts: "target/${ARTIFACT_NAME}", fingerprint: true  // Archive the generated jar
             }
         }
 
-        stage('Deploy to JFrog Artifactory') {
+        stage('Upload to Octopus Deploy') {
             steps {
-                script {
-                    def server = Artifactory.server('JFrog')  // Jenkins JFrog instance ID
-                    def buildInfo = Artifactory.newBuildInfo()
-
-                    def uploadSpec = """{
-                        "files": [
-                            {
-                                "pattern": "target/${ARTIFACT_NAME}",
-                                "target": "${JFROG_REPO}/"
-                            }
-                        ]
-                    }"""
-
-                    server.upload spec: uploadSpec, buildInfo: buildInfo
-                    server.publishBuildInfo buildInfo
-                }
+                sh '''
+                  octopus package upload \
+                    --package "target/${ARTIFACT_NAME}" \
+                    --space "${SPACE}" \
+                    --server "${OCTOPUS_HOST}" \
+                    --api-key "${OCTOPUS_API_KEY}" \
+                    --overwrite-mode overwrite
+                '''
             }
         }
     }
