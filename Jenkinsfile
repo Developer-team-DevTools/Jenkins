@@ -12,21 +12,23 @@ pipeline {
     stages {
         stage('Build with Maven') {
             steps {
-                sh "mvn clean package -Djar.finalName=${ARTIFACT_NAME}"  // Use dynamic name for the artifact
+                sh "mvn clean package -Djar.finalName=${ARTIFACT_NAME}"  // Build with dynamic artifact name
             }
         }
 
         stage('Archive Artifact') {
             steps {
-                archiveArtifacts artifacts: "target/${ARTIFACT_NAME}", fingerprint: true  // Archive the generated jar
+                // Ensure that the correct artifact is archived
+                archiveArtifacts artifacts: "target/hello-world_${BUILD_NUMBER}.jar", fingerprint: true
             }
         }
 
         stage('Upload to Octopus Deploy') {
             steps {
+                // Upload the correct artifact
                 sh '''
                   octopus package upload \
-                    --package "target/${ARTIFACT_NAME}" \
+                    --package "target/hello-world_${BUILD_NUMBER}.jar" \
                     --space "${SPACE}" \
                     --server "${OCTOPUS_HOST}" \
                     --api-key "${OCTOPUS_API_KEY}" \
