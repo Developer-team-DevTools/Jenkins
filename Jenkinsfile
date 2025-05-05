@@ -16,13 +16,7 @@ pipeline {
             }
         }
 
-        stage('Archive Artifact') {
-            steps {
-                // Ensure that the correct artifact is archived
-                archiveArtifacts artifacts: "target/hello-world_${BUILD_NUMBER}.jar", fingerprint: true
-            }
-        }
-
+        
         stage('Upload to Octopus Deploy') {
             steps {
                 // Upload the correct artifact
